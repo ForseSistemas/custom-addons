@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ACCIÓN DE INFORME (PDF) -->
+    <record id="action_report_security_report" model="ir.actions.report">
+        <field name="name">Reporte Técnico (PDF)</field>
+        <field name="model">security.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">security_reports.report_security_report_document</field>
+        <field name="report_file">security_reports.report_security_report_document</field>
+        <field name="print_report_name">'Reporte Tecnico - %s' % (object.name or '').replace('/', '-')</field>
+        <field name="binding_model_id" ref="model_security_report"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <!-- PLANTILLA QWEB -->
+    <template id="report_security_report_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+
+                        <h2>Reporte Técnico <span t-field="o.name"/></h2>
+
+                        <div class="row mt-3 mb-3">
+                            <div class="col-6">
+                                <strong>Cliente:</strong> <span t-field="o.partner_id"/><br/>
+                                <strong>Dirección:</strong> <span t-field="o.direccion"/><br/>
+                                <strong>Tipo de trabajo:</strong> <span t-field="o.tipo_trabajo"/>
+                            </div>
+                            <div class="col-6">
+                                <strong>Fecha:</strong> <span t-field="o.fecha"/><br/>
+                                <strong>Técnico:</strong> <span t-field="o.tecnico_id"/><br/>
+                                <strong>Estado:</strong> <span t-field="o.state"/>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3" t-if="o.hora_llegada or o.hora_salida">
+                            <div class="col-4"><strong>Llegada:</strong> <span t-field="o.hora_llegada"/></div>
+                            <div class="col-4"><strong>Salida:</strong> <span t-field="o.hora_salida"/></div>
+                            <div class="col-4">
+                                <strong>Duración:</strong>
+                                <span t-field="o.duracion_horas" t-options="{'widget': 'float_time'}"/> h
+                            </div>
+                        </div>
+
+                        <h4>Descripción del trabajo</h4>
+                        <p t-field="o.descripcion" style="white-space: pre-wrap;"/>
+
+                        <t t-if="o.line_ids or o.equipos">
+                            <h4>Equipos y materiales</h4>
+                            <table class="table table-sm" t-if="o.line_ids">
+                                <thead>
+                                    <tr>
+                                        <th>Descripción</th>
+                                        <th class="text-end">Cantidad</th>
+                                        <th>N° de serie</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="o.line_ids" t-as="line">
+                                        <td><span t-field="line.name"/></td>
+                                        <td class="text-end"><span t-field="line.cantidad"/></td>
+                                        <td><span t-field="line.numero_serie"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                            <p t-if="o.equipos" t-field="o.equipos" style="white-space: pre-wrap;"/>
+                        </t>
+
+                        <t t-set="fotos" t-value="o.image_ids.filtered(lambda a: a.mimetype and a.mimetype.startswith('image/'))"/>
+                        <t t-if="fotos">
+                            <h4 style="page-break-before: auto;">Evidencia fotográfica</h4>
+                            <div class="row">
+                                <div class="col-4 mb-3" t-foreach="fotos" t-as="foto" style="page-break-inside: avoid;">
+                                    <img t-att-src="image_data_uri(foto.datas)"
+                                         style="max-width: 100%; max-height: 220px;"/>
+                                </div>
+                            </div>
+                        </t>
+
+                        <div class="mt-4" style="page-break-inside: avoid;">
+                            <h4>Recepción conforme</h4>
+                            <img t-if="o.firma_cliente"
+                                 t-att-src="image_data_uri(o.firma_cliente)"
+                                 style="max-height: 120px; max-width: 300px;"/>
+                            <div style="border-top: 1px solid #000; width: 300px;">
+                                <span t-field="o.nombre_receptor"/>
+                            </div>
+                        </div>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+</odoo>

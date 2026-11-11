@@ -1,3 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_security_report_user,security.report.user,model_security_report,base.group_user,1,1,1,0
-access_security_report_manager,security.report.manager,model_security_report,base.group_system,1,1,1,1
+access_security_report_tecnico,security.report.tecnico,model_security_report,group_security_tecnico,1,1,1,0
+access_security_report_supervisor,security.report.supervisor,model_security_report,group_security_supervisor,1,1,1,1
+access_security_report_system,security.report.system,model_security_report,base.group_system,1,1,1,1
+access_security_report_line_tecnico,security.report.line.tecnico,model_security_report_line,group_security_tecnico,1,1,1,1
+access_security_report_line_supervisor,security.report.line.supervisor,model_security_report_line,group_security_supervisor,1,1,1,1
+access_security_report_line_system,security.report.line.system,model_security_report_line,base.group_system,1,1,1,1

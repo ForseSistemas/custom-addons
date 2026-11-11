@@ -12,11 +12,13 @@
                 <field name="partner_id"/>
                 <field name="tecnico_id"/>
                 <field name="tipo_trabajo"/>
+                <field name="duracion_horas" widget="float_time" optional="show"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'borrador'"
                        decoration-primary="state == 'programado'"
                        decoration-warning="state == 'en_proceso'"
-                       decoration-success="state in ('finalizado', 'validado')"/>
+                       decoration-success="state in ('finalizado', 'validado')"
+                       decoration-danger="state == 'rechazado'"/>
             </tree>
         </field>
     </record>
@@ -27,26 +29,44 @@
         <field name="model">security.report</field>
         <field name="arch" type="xml">
             <form string="Reporte Técnico">
-                                <header>
+                <header>
                     <button name="action_programar" type="object"
                             string="Programar" class="btn-secondary"
                             invisible="state != 'borrador'"/>
-                    
+
                     <button name="action_iniciar_trabajo" type="object"
                             string="Iniciar Trabajo (Reloj)" class="btn-primary"
                             invisible="state != 'programado'"
                             confirm="¿Está seguro de iniciar? Se capturará su hora de llegada exacta."/>
-                    
+
                     <button name="action_finalizar" type="object"
                             string="Finalizar y Cerrar" class="btn-primary"
                             invisible="state != 'en_proceso'"
                             confirm="Asegúrese de haber subido fotos y tener la firma. ¿Desea finalizar?"/>
-                    
+
+                    <button name="action_reabrir" type="object"
+                            string="Reabrir para Corregir" class="btn-primary"
+                            invisible="state != 'rechazado'"/>
+
                     <button name="action_validar" type="object"
                             string="Validar (Jefe)" class="btn-success"
                             invisible="state != 'finalizado'"
                             groups="security_reports.group_security_supervisor"/>
-                    
+
+                    <button name="action_rechazar" type="object"
+                            string="Rechazar (Jefe)" class="btn-danger"
+                            invisible="state != 'finalizado'"
+                            groups="security_reports.group_security_supervisor"/>
+
+                    <button name="action_borrador" type="object"
+                            string="Volver a Borrador" class="btn-secondary"
+                            invisible="state not in ('programado', 'rechazado')"
+                            groups="security_reports.group_security_supervisor"/>
+
+                    <button name="%(action_report_security_report)d" type="action"
+                            string="Imprimir Reporte" class="btn-secondary"
+                            invisible="state in ('borrador', 'programado')"/>
+
                     <field name="state" widget="statusbar"
                            statusbar_visible="borrador,programado,en_proceso,finalizado,validado"/>
                 </header>
@@ -58,13 +78,13 @@
                     </div>
                     <group>
                         <group string="Información General">
-                            <field name="fecha"/>
-                            <field name="tipo_trabajo"/>
-                            <field name="tecnico_id"/>
+                            <field name="fecha" readonly="state == 'validado'"/>
+                            <field name="tipo_trabajo" readonly="state == 'validado'"/>
+                            <field name="tecnico_id" readonly="state == 'validado'"/>
                         </group>
                         <group string="Cliente">
-                            <field name="partner_id"/>
-                            <field name="direccion"/>
+                            <field name="partner_id" readonly="state == 'validado'"/>
+                            <field name="direccion" readonly="state == 'validado'"/>
                         </group>
                     </group>
                     <group>
@@ -75,33 +95,56 @@
                         </group>
                     </group>
                     <notebook>
-                        <page string="Descripción del Trabajo">
-                            <field name="descripcion" placeholder="Describa el trabajo realizado..."/>
+                        <page string="Descripción del Trabajo" name="descripcion">
+                            <field name="descripcion" readonly="state == 'validado'"
+                                   placeholder="Describa el trabajo realizado..."/>
                         </page>
-                        <page string="Equipos y Materiales">
-                            <field name="equipos" placeholder="Detalle los equipos usados..."/>
+                        <page string="Equipos y Materiales" name="equipos">
+                            <field name="line_ids" readonly="state == 'validado'">
+                                <tree editable="bottom">
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="product_id"/>
+                                    <field name="name"/>
+                                    <field name="cantidad"/>
+                                    <field name="numero_serie"/>
+                                </tree>
+                            </field>
+                            <separator string="Otros materiales / detalle"/>
+                            <field name="equipos" readonly="state == 'validado'"
+                                   placeholder="Cableado, conectores y otros materiales sin código..."/>
                         </page>
-                        <page string="Notas Internas">
-                            <field name="notas"/>
+                        <page string="Notas Internas" name="notas">
+                            <field name="notas" readonly="state == 'validado'"/>
                         </page>
-                                                <page string="Evidencia Fotográfica">
-                            <field name="image_ids" widget="many2many_binary"/>
+                        <page string="Evidencia Fotográfica" name="fotos">
+                            <field name="image_ids" widget="many2many_binary"
+                                   readonly="state == 'validado'"/>
                         </page>
-                        <page string="Firma y Recepción">
+                        <page string="Firma y Recepción" name="firma">
                             <group>
                                 <group string="Datos del Receptor">
-                                    <field name="nombre_receptor" placeholder="Ej: Juan Pérez"/>
+                                    <field name="nombre_receptor"
+                                           readonly="state == 'validado'"
+                                           placeholder="Ej: Juan Pérez"/>
                                 </group>
                             </group>
                             <separator string="Firma del Cliente"/>
-                            <field name="firma_cliente" widget="signature" 
+                            <field name="firma_cliente" widget="signature"
+                                   readonly="state == 'validado'"
                                    width="400" height="150"/>
                         </page>
-                                                <page string="Revisión del Jefe" groups="security_reports.group_security_supervisor">
-                            <field name="observacion_supervisor" placeholder="Escriba aquí por qué aprueba o rechaza el trabajo..."/>
+                        <page string="Revisión del Jefe" name="revision"
+                              groups="security_reports.group_security_supervisor">
+                            <field name="observacion_supervisor"
+                                   placeholder="Escriba aquí por qué aprueba o rechaza el trabajo..."/>
                         </page>
                     </notebook>
                 </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids"/>
+                    <field name="activity_ids"/>
+                    <field name="message_ids"/>
+                </div>
             </form>
         </field>
     </record>
@@ -121,8 +164,12 @@
                         domain="[('state', '=', 'programado')]"/>
                 <filter string="En Proceso" name="en_proceso"
                         domain="[('state', '=', 'en_proceso')]"/>
-                <filter string="Finalizados" name="finalizado"
+                <filter string="Por Validar" name="finalizado"
                         domain="[('state', '=', 'finalizado')]"/>
+                <filter string="Validados" name="validado"
+                        domain="[('state', '=', 'validado')]"/>
+                <filter string="Rechazados" name="rechazado"
+                        domain="[('state', '=', 'rechazado')]"/>
                 <separator/>
                 <filter string="Mis Reportes" name="mis_reportes"
                         domain="[('tecnico_id', '=', uid)]"/>
@@ -147,9 +194,10 @@
         <field name="view_mode">tree,form</field>
     </record>
 
-    <!-- MENÚ -->
+    <!-- MENÚ (solo para técnicos, supervisores y administradores) -->
     <menuitem id="menu_security_root"
               name="Seguridad"
+              groups="security_reports.group_security_tecnico,base.group_system"
               sequence="10"/>
 
     <menuitem id="menu_security_report"
