@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- VISTA DE LISTA -->
+    <record id="view_security_report_tree" model="ir.ui.view">
+        <field name="name">security.report.tree</field>
+        <field name="model">security.report</field>
+        <field name="arch" type="xml">
+            <tree string="Reportes Técnicos">
+                <field name="name"/>
+                <field name="fecha"/>
+                <field name="partner_id"/>
+                <field name="tecnico_id"/>
+                <field name="tipo_trabajo"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'borrador'"
+                       decoration-primary="state == 'programado'"
+                       decoration-warning="state == 'en_proceso'"
+                       decoration-success="state in ('finalizado', 'validado')"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- VISTA DE FORMULARIO -->
+    <record id="view_security_report_form" model="ir.ui.view">
+        <field name="name">security.report.form</field>
+        <field name="model">security.report</field>
+        <field name="arch" type="xml">
+            <form string="Reporte Técnico">
+                                <header>
+                    <button name="action_programar" type="object"
+                            string="Programar" class="btn-secondary"
+                            invisible="state != 'borrador'"/>
+                    
+                    <button name="action_iniciar_trabajo" type="object"
+                            string="Iniciar Trabajo (Reloj)" class="btn-primary"
+                            invisible="state != 'programado'"
+                            confirm="¿Está seguro de iniciar? Se capturará su hora de llegada exacta."/>
+                    
+                    <button name="action_finalizar" type="object"
+                            string="Finalizar y Cerrar" class="btn-primary"
+                            invisible="state != 'en_proceso'"
+                            confirm="Asegúrese de haber subido fotos y tener la firma. ¿Desea finalizar?"/>
+                    
+                    <button name="action_validar" type="object"
+                            string="Validar (Jefe)" class="btn-success"
+                            invisible="state != 'finalizado'"
+                            groups="security_reports.group_security_supervisor"/>
+                    
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="borrador,programado,en_proceso,finalizado,validado"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                    </div>
+                    <group>
+                        <group string="Información General">
+                            <field name="fecha"/>
+                            <field name="tipo_trabajo"/>
+                            <field name="tecnico_id"/>
+                        </group>
+                        <group string="Cliente">
+                            <field name="partner_id"/>
+                            <field name="direccion"/>
+                        </group>
+                    </group>
+                    <group>
+                        <group string="Tiempos de Trabajo">
+                            <field name="hora_llegada"/>
+                            <field name="hora_salida"/>
+                            <field name="duracion_horas" widget="float_time"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Descripción del Trabajo">
+                            <field name="descripcion" placeholder="Describa el trabajo realizado..."/>
+                        </page>
+                        <page string="Equipos y Materiales">
+                            <field name="equipos" placeholder="Detalle los equipos usados..."/>
+                        </page>
+                        <page string="Notas Internas">
+                            <field name="notas"/>
+                        </page>
+                                                <page string="Evidencia Fotográfica">
+                            <field name="image_ids" widget="many2many_binary"/>
+                        </page>
+                        <page string="Firma y Recepción">
+                            <group>
+                                <group string="Datos del Receptor">
+                                    <field name="nombre_receptor" placeholder="Ej: Juan Pérez"/>
+                                </group>
+                            </group>
+                            <separator string="Firma del Cliente"/>
+                            <field name="firma_cliente" widget="signature" 
+                                   width="400" height="150"/>
+                        </page>
+                                                <page string="Revisión del Jefe" groups="security_reports.group_security_supervisor">
+                            <field name="observacion_supervisor" placeholder="Escriba aquí por qué aprueba o rechaza el trabajo..."/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- VISTA DE BÚSQUEDA -->
+    <record id="view_security_report_search" model="ir.ui.view">
+        <field name="name">security.report.search</field>
+        <field name="model">security.report</field>
+        <field name="arch" type="xml">
+            <search string="Buscar Reportes">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="tecnico_id"/>
+                <filter string="Borradores" name="borrador"
+                        domain="[('state', '=', 'borrador')]"/>
+                <filter string="Programados" name="programado"
+                        domain="[('state', '=', 'programado')]"/>
+                <filter string="En Proceso" name="en_proceso"
+                        domain="[('state', '=', 'en_proceso')]"/>
+                <filter string="Finalizados" name="finalizado"
+                        domain="[('state', '=', 'finalizado')]"/>
+                <separator/>
+                <filter string="Mis Reportes" name="mis_reportes"
+                        domain="[('tecnico_id', '=', uid)]"/>
+                <group expand="0" string="Agrupar por">
+                    <filter string="Estado" name="group_state"
+                            context="{'group_by': 'state'}"/>
+                    <filter string="Técnico" name="group_tecnico"
+                            context="{'group_by': 'tecnico_id'}"/>
+                    <filter string="Cliente" name="group_partner"
+                            context="{'group_by': 'partner_id'}"/>
+                    <filter string="Tipo de Trabajo" name="group_tipo"
+                            context="{'group_by': 'tipo_trabajo'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- ACCIÓN -->
+    <record id="action_security_report" model="ir.actions.act_window">
+        <field name="name">Reportes Técnicos</field>
+        <field name="res_model">security.report</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <!-- MENÚ -->
+    <menuitem id="menu_security_root"
+              name="Seguridad"
+              sequence="10"/>
+
+    <menuitem id="menu_security_report"
+              name="Reportes Técnicos"
+              parent="menu_security_root"
+              action="action_security_report"
+              sequence="10"/>
+
+</odoo>

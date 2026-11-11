@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- 1. Creamos la Categoría (Departamento) -->
+        <record id="module_category_operaciones" model="ir.module.category">
+            <field name="name">Operaciones de Seguridad</field>
+        </record>
+
+        <!-- 2. Creamos el Grupo: Técnico de Campo -->
+        <record id="group_security_tecnico" model="res.groups">
+            <field name="name">Técnico de Campo</field>
+            <field name="category_id" ref="module_category_operaciones"/>
+        </record>
+
+        <!-- 3. Creamos el Grupo: Supervisor de Operaciones -->
+        <record id="group_security_supervisor" model="res.groups">
+            <field name="name">Supervisor de Operaciones</field>
+            <field name="category_id" ref="module_category_operaciones"/>
+            <!-- El supervisor hereda los permisos del técnico -->
+            <field name="implied_ids" eval="[(4, ref('group_security_tecnico'))]"/>
+        </record>
+    </data>
+</odoo>
