@@ -152,6 +152,12 @@ class SecurityReport(models.Model):
     # CONTROL DE TIEMPOS Y ANÁLISIS
     # ==========================================
 
+    duracion_estimada = fields.Float(
+        string='Duración Estimada (Horas)',
+        default=2.0,
+        help='Tiempo previsto para el trabajo. Se usa para dibujar el bloque en la agenda.',
+    )
+
     hora_llegada = fields.Datetime(
         string='Hora de Llegada',
         readonly=True,

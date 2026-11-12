@@ -1,7 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- VISTA DE LISTA -->
+    <!-- ============================================================ -->
+    <!-- VISTA KANBAN: tarjetas por estado (ideal para celular)        -->
+    <!-- ============================================================ -->
+    <record id="view_security_report_kanban" model="ir.ui.view">
+        <field name="name">security.report.kanban</field>
+        <field name="model">security.report</field>
+        <field name="arch" type="xml">
+            <kanban default_group_by="state"
+                    records_draggable="false"
+                    group_create="false"
+                    group_delete="false"
+                    group_edit="false"
+                    quick_create="false"
+                    sample="1">
+                <field name="state"/>
+                <field name="direccion"/>
+                <field name="duracion_horas"/>
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <strong class="text-muted"><field name="name"/></strong>
+                                <field name="tipo_trabajo" widget="badge"/>
+                            </div>
+                            <div class="fs-5 fw-bold mt-1">
+                                <field name="partner_id"/>
+                            </div>
+                            <div class="text-muted" t-if="record.direccion.raw_value">
+                                <i class="fa fa-map-marker me-1" role="img" title="Dirección" aria-label="Dirección"/>
+                                <t t-esc="record.direccion.value"/>
+                            </div>
+                            <div class="text-muted">
+                                <i class="fa fa-calendar me-1" role="img" title="Fecha" aria-label="Fecha"/>
+                                <field name="fecha"/>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                <field name="tecnico_id" widget="many2one_avatar_user"/>
+                                <span t-if="record.duracion_horas.raw_value" class="badge text-bg-light">
+                                    <i class="fa fa-clock-o me-1" role="img" title="Duración" aria-label="Duración"/>
+                                    <field name="duracion_horas" widget="float_time"/> h
+                                </span>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- VISTA DE LISTA                                                -->
+    <!-- ============================================================ -->
     <record id="view_security_report_tree" model="ir.ui.view">
         <field name="name">security.report.tree</field>
         <field name="model">security.report</field>
@@ -10,20 +61,71 @@
                 <field name="name"/>
                 <field name="fecha"/>
                 <field name="partner_id"/>
-                <field name="tecnico_id"/>
+                <field name="tecnico_id" widget="many2one_avatar_user"/>
                 <field name="tipo_trabajo"/>
                 <field name="duracion_horas" widget="float_time" optional="show"/>
                 <field name="state" widget="badge"
                        decoration-info="state == 'borrador'"
                        decoration-primary="state == 'programado'"
-                       decoration-warning="state == 'en_proceso'"
-                       decoration-success="state in ('finalizado', 'validado')"
+                       decoration-warning="state in ('en_proceso', 'finalizado')"
+                       decoration-success="state == 'validado'"
                        decoration-danger="state == 'rechazado'"/>
             </tree>
         </field>
     </record>
 
-    <!-- VISTA DE FORMULARIO -->
+    <!-- ============================================================ -->
+    <!-- VISTA DE CALENDARIO: agenda de trabajos                       -->
+    <!-- ============================================================ -->
+    <record id="view_security_report_calendar" model="ir.ui.view">
+        <field name="name">security.report.calendar</field>
+        <field name="model">security.report</field>
+        <field name="arch" type="xml">
+            <calendar string="Agenda de Trabajos"
+                      date_start="fecha"
+                      date_delay="duracion_estimada"
+                      color="tecnico_id"
+                      mode="week"
+                      scales="day,week,month"
+                      quick_create="0">
+                <field name="name"/>
+                <field name="partner_id"/>
+                <field name="tipo_trabajo"/>
+                <field name="state"/>
+                <field name="tecnico_id" filters="1" avatar_field="avatar_128"/>
+            </calendar>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- VISTAS DE ANÁLISIS: gráfico y tabla dinámica                  -->
+    <!-- ============================================================ -->
+    <record id="view_security_report_graph" model="ir.ui.view">
+        <field name="name">security.report.graph</field>
+        <field name="model">security.report</field>
+        <field name="arch" type="xml">
+            <graph string="Reportes Técnicos" type="bar" stacked="1">
+                <field name="tecnico_id"/>
+                <field name="state"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_security_report_pivot" model="ir.ui.view">
+        <field name="name">security.report.pivot</field>
+        <field name="model">security.report</field>
+        <field name="arch" type="xml">
+            <pivot string="Resumen de Reportes">
+                <field name="tecnico_id" type="row"/>
+                <field name="state" type="col"/>
+                <field name="duracion_horas" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- VISTA DE FORMULARIO                                           -->
+    <!-- ============================================================ -->
     <record id="view_security_report_form" model="ir.ui.view">
         <field name="name">security.report.form</field>
         <field name="model">security.report</field>
@@ -31,11 +133,11 @@
             <form string="Reporte Técnico">
                 <header>
                     <button name="action_programar" type="object"
-                            string="Programar" class="btn-secondary"
+                            string="Programar" class="btn-primary"
                             invisible="state != 'borrador'"/>
 
                     <button name="action_iniciar_trabajo" type="object"
-                            string="Iniciar Trabajo (Reloj)" class="btn-primary"
+                            string="Iniciar Trabajo" class="btn-primary"
                             invisible="state != 'programado'"
                             confirm="¿Está seguro de iniciar? Se capturará su hora de llegada exacta."/>
 
@@ -49,12 +151,12 @@
                             invisible="state != 'rechazado'"/>
 
                     <button name="action_validar" type="object"
-                            string="Validar (Jefe)" class="btn-success"
+                            string="Validar" class="btn-success"
                             invisible="state != 'finalizado'"
                             groups="security_reports.group_security_supervisor"/>
 
                     <button name="action_rechazar" type="object"
-                            string="Rechazar (Jefe)" class="btn-danger"
+                            string="Rechazar" class="btn-danger"
                             invisible="state != 'finalizado'"
                             groups="security_reports.group_security_supervisor"/>
 
@@ -71,31 +173,61 @@
                            statusbar_visible="borrador,programado,en_proceso,finalizado,validado"/>
                 </header>
                 <sheet>
+                    <widget name="web_ribbon" title="Validado" bg_color="text-bg-success"
+                            invisible="state != 'validado'"/>
+                    <widget name="web_ribbon" title="Rechazado" bg_color="text-bg-danger"
+                            invisible="state != 'rechazado'"/>
+
+                    <!-- Avisos según el estado: dicen qué toca hacer ahora -->
+                    <div class="alert alert-danger" role="alert"
+                         invisible="state != 'rechazado'">
+                        <strong>El supervisor rechazó este reporte.</strong>
+                        <field name="observacion_supervisor" readonly="1" class="d-block"/>
+                        Corrija lo indicado y pulse «Reabrir para Corregir».
+                    </div>
+                    <div class="alert alert-warning" role="alert"
+                         invisible="state != 'en_proceso'">
+                        <strong>Trabajo en curso.</strong>
+                        Antes de finalizar: describa el trabajo, suba al menos una foto
+                        y pida la firma del cliente.
+                    </div>
+                    <div class="alert alert-info" role="alert"
+                         invisible="state != 'finalizado'">
+                        <strong>Pendiente de validación.</strong>
+                        El supervisor revisará el reporte.
+                    </div>
+
                     <div class="oe_title">
                         <h1>
                             <field name="name" readonly="1"/>
                         </h1>
+                        <h2>
+                            <field name="partner_id" placeholder="Cliente"
+                                   readonly="state == 'validado'"/>
+                        </h2>
                     </div>
+
                     <group>
-                        <group string="Información General">
-                            <field name="fecha" readonly="state == 'validado'"/>
+                        <group string="Trabajo">
                             <field name="tipo_trabajo" readonly="state == 'validado'"/>
-                            <field name="tecnico_id" readonly="state == 'validado'"/>
+                            <field name="fecha" readonly="state == 'validado'"/>
+                            <field name="duracion_estimada" widget="float_time"
+                                   readonly="state == 'validado'"/>
+                            <field name="tecnico_id" widget="many2one_avatar_user"
+                                   readonly="state == 'validado'"/>
                         </group>
-                        <group string="Cliente">
-                            <field name="partner_id" readonly="state == 'validado'"/>
-                            <field name="direccion" readonly="state == 'validado'"/>
+                        <group string="Ubicación y tiempos">
+                            <field name="direccion" readonly="state == 'validado'"
+                                   placeholder="Dirección del trabajo"/>
+                            <field name="hora_llegada" invisible="not hora_llegada"/>
+                            <field name="hora_salida" invisible="not hora_salida"/>
+                            <field name="duracion_horas" widget="float_time"
+                                   invisible="not hora_salida"/>
                         </group>
                     </group>
-                    <group>
-                        <group string="Tiempos de Trabajo">
-                            <field name="hora_llegada"/>
-                            <field name="hora_salida"/>
-                            <field name="duracion_horas" widget="float_time"/>
-                        </group>
-                    </group>
+
                     <notebook>
-                        <page string="Descripción del Trabajo" name="descripcion">
+                        <page string="Trabajo Realizado" name="descripcion">
                             <field name="descripcion" readonly="state == 'validado'"
                                    placeholder="Describa el trabajo realizado..."/>
                         </page>
@@ -113,25 +245,25 @@
                             <field name="equipos" readonly="state == 'validado'"
                                    placeholder="Cableado, conectores y otros materiales sin código..."/>
                         </page>
-                        <page string="Notas Internas" name="notas">
-                            <field name="notas" readonly="state == 'validado'"/>
-                        </page>
-                        <page string="Evidencia Fotográfica" name="fotos">
+                        <page string="Fotos" name="fotos">
                             <field name="image_ids" widget="many2many_binary"
                                    readonly="state == 'validado'"/>
                         </page>
-                        <page string="Firma y Recepción" name="firma">
+                        <page string="Firma del Cliente" name="firma">
                             <group>
-                                <group string="Datos del Receptor">
+                                <group string="Quien recibe">
                                     <field name="nombre_receptor"
                                            readonly="state == 'validado'"
                                            placeholder="Ej: Juan Pérez"/>
                                 </group>
                             </group>
-                            <separator string="Firma del Cliente"/>
+                            <separator string="Firma"/>
                             <field name="firma_cliente" widget="signature"
                                    readonly="state == 'validado'"
                                    width="400" height="150"/>
+                        </page>
+                        <page string="Notas Internas" name="notas">
+                            <field name="notas" readonly="state == 'validado'"/>
                         </page>
                         <page string="Revisión del Jefe" name="revision"
                               groups="security_reports.group_security_supervisor">
@@ -149,7 +281,9 @@
         </field>
     </record>
 
-    <!-- VISTA DE BÚSQUEDA -->
+    <!-- ============================================================ -->
+    <!-- VISTA DE BÚSQUEDA                                             -->
+    <!-- ============================================================ -->
     <record id="view_security_report_search" model="ir.ui.view">
         <field name="name">security.report.search</field>
         <field name="model">security.report</field>
@@ -173,6 +307,8 @@
                 <separator/>
                 <filter string="Mis Reportes" name="mis_reportes"
                         domain="[('tecnico_id', '=', uid)]"/>
+                <separator/>
+                <filter string="Fecha" name="filter_fecha" date="fecha"/>
                 <group expand="0" string="Agrupar por">
                     <filter string="Estado" name="group_state"
                             context="{'group_by': 'state'}"/>
@@ -182,22 +318,50 @@
                             context="{'group_by': 'partner_id'}"/>
                     <filter string="Tipo de Trabajo" name="group_tipo"
                             context="{'group_by': 'tipo_trabajo'}"/>
+                    <filter string="Mes" name="group_fecha"
+                            context="{'group_by': 'fecha:month'}"/>
                 </group>
             </search>
         </field>
     </record>
 
-    <!-- ACCIÓN -->
+    <!-- ============================================================ -->
+    <!-- ACCIONES                                                      -->
+    <!-- ============================================================ -->
     <record id="action_security_report" model="ir.actions.act_window">
         <field name="name">Reportes Técnicos</field>
         <field name="res_model">security.report</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">kanban,tree,form,calendar</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Cree su primer reporte técnico
+            </p>
+            <p>
+                Registre aquí los trabajos de campo: instalaciones, mantenimientos,
+                reparaciones y diagnósticos, con fotos y firma del cliente.
+            </p>
+        </field>
     </record>
 
-    <!-- MENÚ (solo para técnicos, supervisores y administradores) -->
+    <record id="action_security_report_agenda" model="ir.actions.act_window">
+        <field name="name">Agenda de Trabajos</field>
+        <field name="res_model">security.report</field>
+        <field name="view_mode">calendar,tree,form</field>
+    </record>
+
+    <record id="action_security_report_resumen" model="ir.actions.act_window">
+        <field name="name">Resumen de Reportes</field>
+        <field name="res_model">security.report</field>
+        <field name="view_mode">graph,pivot</field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- MENÚS                                                         -->
+    <!-- ============================================================ -->
     <menuitem id="menu_security_root"
               name="Seguridad"
               groups="security_reports.group_security_tecnico,base.group_system"
+              web_icon="security_reports,static/description/icon.png"
               sequence="10"/>
 
     <menuitem id="menu_security_report"
@@ -205,5 +369,18 @@
               parent="menu_security_root"
               action="action_security_report"
               sequence="10"/>
+
+    <menuitem id="menu_security_agenda"
+              name="Agenda"
+              parent="menu_security_root"
+              action="action_security_report_agenda"
+              sequence="20"/>
+
+    <menuitem id="menu_security_resumen"
+              name="Resumen"
+              parent="menu_security_root"
+              action="action_security_report_resumen"
+              groups="security_reports.group_security_supervisor,base.group_system"
+              sequence="30"/>
 
 </odoo>
