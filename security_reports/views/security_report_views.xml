@@ -173,6 +173,9 @@
                            statusbar_visible="borrador,programado,en_proceso,finalizado,validado"/>
                 </header>
                 <sheet>
+                    <!-- Banderas de permisos según el perfil del usuario -->
+                    <field name="es_editable" invisible="1"/>
+                    <field name="es_supervisor" invisible="1"/>
                     <widget name="web_ribbon" title="Validado" bg_color="text-bg-success"
                             invisible="state != 'validado'"/>
                     <widget name="web_ribbon" title="Rechazado" bg_color="text-bg-danger"
@@ -203,21 +206,21 @@
                         </h1>
                         <h2>
                             <field name="partner_id" placeholder="Cliente"
-                                   readonly="state == 'validado'"/>
+                                   readonly="not es_editable"/>
                         </h2>
                     </div>
 
                     <group>
                         <group string="Trabajo">
-                            <field name="tipo_trabajo" readonly="state == 'validado'"/>
-                            <field name="fecha" readonly="state == 'validado'"/>
+                            <field name="tipo_trabajo" readonly="not es_editable"/>
+                            <field name="fecha" readonly="not es_editable"/>
                             <field name="duracion_estimada" widget="float_time"
-                                   readonly="state == 'validado'"/>
+                                   readonly="not es_editable"/>
                             <field name="tecnico_id" widget="many2one_avatar_user"
-                                   readonly="state == 'validado'"/>
+                                   readonly="not es_editable or not es_supervisor"/>
                         </group>
                         <group string="Ubicación y tiempos">
-                            <field name="direccion" readonly="state == 'validado'"
+                            <field name="direccion" readonly="not es_editable"
                                    placeholder="Dirección del trabajo"/>
                             <field name="hora_llegada" invisible="not hora_llegada"/>
                             <field name="hora_salida" invisible="not hora_salida"/>
@@ -228,11 +231,11 @@
 
                     <notebook>
                         <page string="Trabajo Realizado" name="descripcion">
-                            <field name="descripcion" readonly="state == 'validado'"
+                            <field name="descripcion" readonly="not es_editable"
                                    placeholder="Describa el trabajo realizado..."/>
                         </page>
                         <page string="Equipos y Materiales" name="equipos">
-                            <field name="line_ids" readonly="state == 'validado'">
+                            <field name="line_ids" readonly="not es_editable">
                                 <tree editable="bottom">
                                     <field name="sequence" widget="handle"/>
                                     <field name="product_id"/>
@@ -242,28 +245,28 @@
                                 </tree>
                             </field>
                             <separator string="Otros materiales / detalle"/>
-                            <field name="equipos" readonly="state == 'validado'"
+                            <field name="equipos" readonly="not es_editable"
                                    placeholder="Cableado, conectores y otros materiales sin código..."/>
                         </page>
                         <page string="Fotos" name="fotos">
                             <field name="image_ids" widget="many2many_binary"
-                                   readonly="state == 'validado'"/>
+                                   readonly="not es_editable"/>
                         </page>
                         <page string="Firma del Cliente" name="firma">
                             <group>
                                 <group string="Quien recibe">
                                     <field name="nombre_receptor"
-                                           readonly="state == 'validado'"
+                                           readonly="not es_editable"
                                            placeholder="Ej: Juan Pérez"/>
                                 </group>
                             </group>
                             <separator string="Firma"/>
                             <field name="firma_cliente" widget="signature"
-                                   readonly="state == 'validado'"
+                                   readonly="not es_editable"
                                    width="400" height="150"/>
                         </page>
                         <page string="Notas Internas" name="notas">
-                            <field name="notas" readonly="state == 'validado'"/>
+                            <field name="notas" readonly="not es_editable"/>
                         </page>
                         <page string="Revisión del Jefe" name="revision"
                               groups="security_reports.group_security_supervisor">
