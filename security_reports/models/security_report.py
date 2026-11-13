@@ -5,6 +5,12 @@ from odoo.exceptions import AccessError, UserError
 # Campos que solo deben cambiar mediante los botones del flujo
 PROTECTED_FIELDS = {'state', 'hora_llegada', 'hora_salida'}
 
+# Campos que solo puede escribir un supervisor
+SUPERVISOR_ONLY_FIELDS = {'observacion_supervisor'}
+
+# Estados en los que el técnico puede editar el reporte
+TECNICO_EDITABLE_STATES = ('borrador', 'programado', 'en_proceso', 'rechazado')
+
 
 class SecurityReport(models.Model):
     _name = 'security.report'
@@ -152,6 +158,12 @@ class SecurityReport(models.Model):
     # CONTROL DE TIEMPOS Y ANÁLISIS
     # ==========================================
 
+    duracion_estimada = fields.Float(
+        string='Duración Estimada (Horas)',
+        default=2.0,
+        help='Tiempo previsto para el trabajo. Se usa para dibujar el bloque en la agenda.',
+    )
+
     hora_llegada = fields.Datetime(
         string='Hora de Llegada',
         readonly=True,
@@ -201,6 +213,20 @@ class SecurityReport(models.Model):
             or user.has_group('base.group_system')
         )
 
+    es_supervisor = fields.Boolean(compute='_compute_permisos')
+    es_editable = fields.Boolean(compute='_compute_permisos')
+
+    @api.depends('state')
+    def _compute_permisos(self):
+        """Banderas para la vista: qué puede hacer el usuario actual."""
+        supervisor = self._is_supervisor()
+        for rec in self:
+            rec.es_supervisor = supervisor
+            if supervisor:
+                rec.es_editable = rec.state != 'validado'
+            else:
+                rec.es_editable = rec.state in TECNICO_EDITABLE_STATES
+
     def _check_supervisor(self):
         if not self._is_supervisor():
             raise AccessError(
@@ -231,8 +257,18 @@ class SecurityReport(models.Model):
                 raise AccessError(_(
                     'El estado y los tiempos solo se modifican con los botones del reporte.'
                 ))
-            if any(rec.state == 'validado' for rec in self):
-                raise UserError(_('Un reporte validado ya no se puede modificar.'))
+            if SUPERVISOR_ONLY_FIELDS & set(vals):
+                raise AccessError(_(
+                    'Solo un supervisor puede escribir la observación del supervisor.'
+                ))
+            if 'tecnico_id' in vals and any(
+                rec.tecnico_id.id != vals['tecnico_id'] for rec in self
+            ):
+                raise AccessError(_('Solo un supervisor puede reasignar el técnico.'))
+            if any(rec.state not in TECNICO_EDITABLE_STATES for rec in self):
+                raise UserError(_(
+                    'El reporte está pendiente de validación o validado y ya no se puede modificar.'
+                ))
         return super().write(vals)
 
     # ==========================================
@@ -353,6 +389,11 @@ class SecurityReport(models.Model):
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
+            if not self._is_supervisor():
+                # Un técnico solo crea reportes propios y en borrador
+                for field_name in PROTECTED_FIELDS | SUPERVISOR_ONLY_FIELDS:
+                    vals.pop(field_name, None)
+                vals['tecnico_id'] = self.env.user.id
             if vals.get('name', 'Nuevo') == 'Nuevo':
                 vals['name'] = self.env['ir.sequence'].next_by_code(
                     'security.report'

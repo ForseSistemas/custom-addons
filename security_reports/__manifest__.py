@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Reportes Técnicos de Seguridad',
-    'version': '17.0.1.1.0',
+    'version': '17.0.1.3.0',
     'summary': 'Registro de trabajos técnicos de campo: instalaciones, mantenimientos, reparaciones',
     'description': """
 Reportes Técnicos de Seguridad
@@ -17,6 +17,7 @@ reparaciones y diagnósticos.
 * Líneas de equipos y materiales con producto, cantidad y serie.
 * Historial (chatter) y avisos al supervisor y al técnico.
 * Informe PDF para entregar al cliente.
+* Vistas kanban, calendario (agenda), gráfico y tabla dinámica.
     """,
     'author': 'Forsemax',
     'category': 'Security',
