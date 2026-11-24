@@ -18,6 +18,8 @@
                 <field name="state"/>
                 <field name="direccion"/>
                 <field name="duracion_horas"/>
+                <field name="check_total"/>
+                <field name="check_hechos"/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="oe_kanban_global_click">
@@ -38,6 +40,10 @@
                             </div>
                             <div class="d-flex justify-content-between align-items-center mt-2">
                                 <field name="tecnico_id" widget="many2one_avatar_user"/>
+                                <span t-if="record.check_total.raw_value" class="badge text-bg-light me-1">
+                                    <i class="fa fa-check-square-o me-1" role="img" title="Checklist" aria-label="Checklist"/>
+                                    <t t-esc="record.check_hechos.raw_value"/>/<t t-esc="record.check_total.raw_value"/>
+                                </span>
                                 <span t-if="record.duracion_horas.raw_value" class="badge text-bg-light">
                                     <i class="fa fa-clock-o me-1" role="img" title="Duración" aria-label="Duración"/>
                                     <field name="duracion_horas" widget="float_time"/> h
@@ -130,7 +136,7 @@
         <field name="name">security.report.form</field>
         <field name="model">security.report</field>
         <field name="arch" type="xml">
-            <form string="Reporte Técnico">
+            <form string="Reporte Técnico" js_class="security_report_form">
                 <header>
                     <button name="action_programar" type="object"
                             string="Programar" class="btn-primary"
@@ -176,6 +182,12 @@
                     <!-- Banderas de permisos según el perfil del usuario -->
                     <field name="es_editable" invisible="1"/>
                     <field name="es_supervisor" invisible="1"/>
+                    <field name="check_total" invisible="1"/>
+                    <!-- Campos que rellena el navegador con la ubicación GPS -->
+                    <field name="gps_inicio_lat" invisible="1"/>
+                    <field name="gps_inicio_lng" invisible="1"/>
+                    <field name="gps_fin_lat" invisible="1"/>
+                    <field name="gps_fin_lng" invisible="1"/>
                     <widget name="web_ribbon" title="Validado" bg_color="text-bg-success"
                             invisible="state != 'validado'"/>
                     <widget name="web_ribbon" title="Rechazado" bg_color="text-bg-danger"
@@ -191,8 +203,8 @@
                     <div class="alert alert-warning" role="alert"
                          invisible="state != 'en_proceso'">
                         <strong>Trabajo en curso.</strong>
-                        Antes de finalizar: describa el trabajo, suba al menos una foto
-                        y pida la firma del cliente.
+                        Antes de finalizar: complete el checklist, describa el trabajo,
+                        suba al menos una foto y pida la firma del cliente.
                     </div>
                     <div class="alert alert-info" role="alert"
                          invisible="state != 'finalizado'">
@@ -218,6 +230,8 @@
                                    readonly="not es_editable"/>
                             <field name="tecnico_id" widget="many2one_avatar_user"
                                    readonly="not es_editable or not es_supervisor"/>
+                            <field name="checklist_progress" widget="progressbar"
+                                   invisible="check_total == 0"/>
                         </group>
                         <group string="Ubicación y tiempos">
                             <field name="direccion" readonly="not es_editable"
@@ -226,6 +240,10 @@
                             <field name="hora_salida" invisible="not hora_salida"/>
                             <field name="duracion_horas" widget="float_time"
                                    invisible="not hora_salida"/>
+                            <field name="gps_inicio_url" widget="url" text="Ver en el mapa"
+                                   invisible="not gps_inicio_url"/>
+                            <field name="gps_fin_url" widget="url" text="Ver en el mapa"
+                                   invisible="not gps_fin_url"/>
                         </group>
                     </group>
 
@@ -247,6 +265,17 @@
                             <separator string="Otros materiales / detalle"/>
                             <field name="equipos" readonly="not es_editable"
                                    placeholder="Cableado, conectores y otros materiales sin código..."/>
+                        </page>
+                        <page string="Checklist" name="checklist"
+                              invisible="check_total == 0">
+                            <field name="check_ids" readonly="not es_editable">
+                                <tree editable="bottom" create="false" delete="false"
+                                      decoration-success="hecho">
+                                    <field name="name" readonly="1"/>
+                                    <field name="obligatorio" readonly="1"/>
+                                    <field name="hecho" widget="boolean_toggle"/>
+                                </tree>
+                            </field>
                         </page>
                         <page string="Fotos" name="fotos">
                             <field name="image_ids" widget="many2many_binary"

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Plantillas iniciales: el supervisor puede editarlas desde Seguridad > Configuración -->
+    <data noupdate="1">
+
+        <record id="checklist_template_instalacion" model="security.checklist.template">
+            <field name="name">Checklist de Instalación</field>
+            <field name="tipo_trabajo">instalacion</field>
+        </record>
+        <record id="checklist_template_instalacion_1" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_instalacion"/>
+            <field name="sequence">10</field>
+            <field name="name">Equipo instalado y fijado correctamente</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_instalacion_2" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_instalacion"/>
+            <field name="sequence">20</field>
+            <field name="name">Cableado ordenado, canalizado y rotulado</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_instalacion_3" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_instalacion"/>
+            <field name="sequence">30</field>
+            <field name="name">Imagen en vivo verificada en todas las cámaras</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_instalacion_4" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_instalacion"/>
+            <field name="sequence">40</field>
+            <field name="name">Grabación verificada en el DVR/NVR</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_instalacion_5" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_instalacion"/>
+            <field name="sequence">50</field>
+            <field name="name">Claves y accesos entregados al cliente</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_instalacion_6" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_instalacion"/>
+            <field name="sequence">60</field>
+            <field name="name">Área de trabajo limpia y sin residuos</field>
+            <field name="obligatorio" eval="False"/>
+        </record>
+
+        <record id="checklist_template_mantenimiento" model="security.checklist.template">
+            <field name="name">Checklist de Mantenimiento</field>
+            <field name="tipo_trabajo">mantenimiento</field>
+        </record>
+        <record id="checklist_template_mantenimiento_1" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_mantenimiento"/>
+            <field name="sequence">10</field>
+            <field name="name">Limpieza de lentes, carcasas y equipos</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_mantenimiento_2" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_mantenimiento"/>
+            <field name="sequence">20</field>
+            <field name="name">Revisión de conexiones, fuentes y cableado</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_mantenimiento_3" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_mantenimiento"/>
+            <field name="sequence">30</field>
+            <field name="name">Grabación y almacenamiento verificados</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_mantenimiento_4" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_mantenimiento"/>
+            <field name="sequence">40</field>
+            <field name="name">Prueba de imagen (día y noche)</field>
+            <field name="obligatorio" eval="False"/>
+        </record>
+        <record id="checklist_template_mantenimiento_5" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_mantenimiento"/>
+            <field name="sequence">50</field>
+            <field name="name">Fecha y hora del equipo verificadas</field>
+            <field name="obligatorio" eval="False"/>
+        </record>
+
+        <record id="checklist_template_reparacion" model="security.checklist.template">
+            <field name="name">Checklist de Reparación</field>
+            <field name="tipo_trabajo">reparacion</field>
+        </record>
+        <record id="checklist_template_reparacion_1" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_reparacion"/>
+            <field name="sequence">10</field>
+            <field name="name">Falla identificada y documentada</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_reparacion_2" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_reparacion"/>
+            <field name="sequence">20</field>
+            <field name="name">Parte reparada o reemplazada</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_reparacion_3" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_reparacion"/>
+            <field name="sequence">30</field>
+            <field name="name">Prueba de funcionamiento tras la reparación</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_reparacion_4" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_reparacion"/>
+            <field name="sequence">40</field>
+            <field name="name">Equipo retirado entregado o registrado</field>
+            <field name="obligatorio" eval="False"/>
+        </record>
+
+        <record id="checklist_template_diagnostico" model="security.checklist.template">
+            <field name="name">Checklist de Diagnóstico</field>
+            <field name="tipo_trabajo">diagnostico</field>
+        </record>
+        <record id="checklist_template_diagnostico_1" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_diagnostico"/>
+            <field name="sequence">10</field>
+            <field name="name">Equipos y conexiones revisados</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_diagnostico_2" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_diagnostico"/>
+            <field name="sequence">20</field>
+            <field name="name">Causa probable documentada</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_diagnostico_3" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_diagnostico"/>
+            <field name="sequence">30</field>
+            <field name="name">Recomendación explicada al cliente</field>
+            <field name="obligatorio" eval="False"/>
+        </record>
+
+        <record id="checklist_template_desinstalacion" model="security.checklist.template">
+            <field name="name">Checklist de Desinstalación</field>
+            <field name="tipo_trabajo">desinstalacion</field>
+        </record>
+        <record id="checklist_template_desinstalacion_1" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_desinstalacion"/>
+            <field name="sequence">10</field>
+            <field name="name">Equipos retirados y contados</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_desinstalacion_2" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_desinstalacion"/>
+            <field name="sequence">20</field>
+            <field name="name">Cableado retirado o asegurado</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_desinstalacion_3" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_desinstalacion"/>
+            <field name="sequence">30</field>
+            <field name="name">Equipos entregados al cliente o a bodega</field>
+            <field name="obligatorio" eval="True"/>
+        </record>
+        <record id="checklist_template_desinstalacion_4" model="security.checklist.template.line">
+            <field name="template_id" ref="checklist_template_desinstalacion"/>
+            <field name="sequence">40</field>
+            <field name="name">Área de trabajo limpia y sin residuos</field>
+            <field name="obligatorio" eval="False"/>
+        </record>
+
+    </data>
+</odoo>

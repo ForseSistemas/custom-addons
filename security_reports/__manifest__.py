@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Reportes Técnicos de Seguridad',
-    'version': '17.0.1.3.0',
+    'version': '17.0.1.4.0',
     'summary': 'Registro de trabajos técnicos de campo: instalaciones, mantenimientos, reparaciones',
     'description': """
 Reportes Técnicos de Seguridad
@@ -18,6 +18,8 @@ reparaciones y diagnósticos.
 * Historial (chatter) y avisos al supervisor y al técnico.
 * Informe PDF para entregar al cliente.
 * Vistas kanban, calendario (agenda), gráfico y tabla dinámica.
+* Checklist por tipo de trabajo, obligatorio para finalizar.
+* Ubicación GPS al iniciar y finalizar el trabajo.
     """,
     'author': 'Forsemax',
     'category': 'Security',
@@ -28,9 +30,16 @@ reparaciones y diagnósticos.
         'security/ir.model.access.csv',
         'security/security_rules.xml',
         'data/ir_sequence_data.xml',
+        'data/checklist_data.xml',
         'report/security_report_report.xml',
         'views/security_report_views.xml',
+        'views/security_checklist_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'security_reports/static/src/js/security_report_form.js',
+        ],
+    },
     'installable': True,
     'application': True,
     'auto_install': False,
