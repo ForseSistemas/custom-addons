@@ -117,6 +117,7 @@ class TestPermisosReportes(TransactionCase):
         como_tecnico = reporte.with_user(self.tecnico)
         como_tecnico.action_iniciar_trabajo()
         self.assertEqual(reporte.state, 'en_proceso')
+        como_tecnico.check_ids.write({'hecho': True})
         como_tecnico.write({
             'descripcion': 'Instalación de cámara',
             'firma_cliente': base64.b64encode(b'firma'),

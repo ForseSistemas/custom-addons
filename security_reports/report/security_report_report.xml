@@ -68,6 +68,27 @@
                             <p t-if="o.equipos" t-field="o.equipos" style="white-space: pre-wrap;"/>
                         </t>
 
+                        <t t-if="o.check_ids">
+                            <h4>Checklist</h4>
+                            <table class="table table-sm">
+                                <tbody>
+                                    <tr t-foreach="o.check_ids" t-as="check">
+                                        <td style="width: 5%;">
+                                            <span t-if="check.hecho">&#10003;</span>
+                                            <span t-else="">&#10007;</span>
+                                        </td>
+                                        <td><span t-field="check.name"/></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+
+                        <p t-if="o.gps_inicio_url or o.gps_fin_url" class="small text-muted">
+                            Ubicación registrada:
+                            <t t-if="o.gps_inicio_url">inicio <span t-esc="'%.5f, %.5f' % (o.gps_inicio_lat, o.gps_inicio_lng)"/></t>
+                            <t t-if="o.gps_fin_url"> · salida <span t-esc="'%.5f, %.5f' % (o.gps_fin_lat, o.gps_fin_lng)"/></t>
+                        </p>
+
                         <t t-set="fotos" t-value="o.image_ids.filtered(lambda a: a.mimetype and a.mimetype.startswith('image/'))"/>
                         <t t-if="fotos">
                             <h4 style="page-break-before: auto;">Evidencia fotográfica</h4>

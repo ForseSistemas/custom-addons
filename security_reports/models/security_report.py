@@ -5,6 +5,15 @@ from odoo.exceptions import AccessError, UserError
 # Campos que solo deben cambiar mediante los botones del flujo
 PROTECTED_FIELDS = {'state', 'hora_llegada', 'hora_salida'}
 
+# Tipos de trabajo (también los usan las plantillas de checklist)
+TIPO_TRABAJO_SELECTION = [
+    ('instalacion', 'Instalación'),
+    ('mantenimiento', 'Mantenimiento'),
+    ('reparacion', 'Reparación'),
+    ('diagnostico', 'Diagnóstico'),
+    ('desinstalacion', 'Desinstalación'),
+]
+
 # Campos que solo puede escribir un supervisor
 SUPERVISOR_ONLY_FIELDS = {'observacion_supervisor'}
 
@@ -68,13 +77,7 @@ class SecurityReport(models.Model):
     # ==========================================
 
     tipo_trabajo = fields.Selection(
-        selection=[
-            ('instalacion', 'Instalación'),
-            ('mantenimiento', 'Mantenimiento'),
-            ('reparacion', 'Reparación'),
-            ('diagnostico', 'Diagnóstico'),
-            ('desinstalacion', 'Desinstalación'),
-        ],
+        selection=TIPO_TRABAJO_SELECTION,
         string='Tipo de Trabajo',
         required=True,
         default='instalacion',
@@ -157,6 +160,79 @@ class SecurityReport(models.Model):
     # ==========================================
     # CONTROL DE TIEMPOS Y ANÁLISIS
     # ==========================================
+
+    # ==========================================
+    # CHECKLIST POR TIPO DE TRABAJO
+    # ==========================================
+
+    check_ids = fields.One2many(
+        'security.report.check',
+        'report_id',
+        string='Checklist',
+        copy=False,
+    )
+
+    check_total = fields.Integer(compute='_compute_checklist')
+    check_hechos = fields.Integer(compute='_compute_checklist')
+    checklist_progress = fields.Float(
+        string='Avance del Checklist',
+        compute='_compute_checklist',
+    )
+
+    @api.depends('check_ids.hecho')
+    def _compute_checklist(self):
+        for rec in self:
+            total = len(rec.check_ids)
+            hechos = len(rec.check_ids.filtered('hecho'))
+            rec.check_total = total
+            rec.check_hechos = hechos
+            rec.checklist_progress = (hechos * 100.0 / total) if total else 0.0
+
+    def _generar_checklist(self):
+        """Copia a cada reporte los puntos de la plantilla de su tipo de trabajo."""
+        Plantilla = self.env['security.checklist.template'].sudo()
+        Check = self.env['security.report.check'].sudo()
+        for rec in self:
+            if rec.check_ids:
+                continue
+            plantilla = Plantilla.search(
+                [('tipo_trabajo', '=', rec.tipo_trabajo)], limit=1
+            )
+            if plantilla:
+                Check.create([{
+                    'report_id': rec.id,
+                    'sequence': linea.sequence,
+                    'name': linea.name,
+                    'obligatorio': linea.obligatorio,
+                } for linea in plantilla.line_ids])
+
+    # ==========================================
+    # UBICACIÓN GPS (la captura la hace el navegador del técnico)
+    # ==========================================
+
+    gps_inicio_lat = fields.Float(string='Latitud de inicio', digits=(10, 7), copy=False)
+    gps_inicio_lng = fields.Float(string='Longitud de inicio', digits=(10, 7), copy=False)
+    gps_fin_lat = fields.Float(string='Latitud de salida', digits=(10, 7), copy=False)
+    gps_fin_lng = fields.Float(string='Longitud de salida', digits=(10, 7), copy=False)
+
+    gps_inicio_url = fields.Char(
+        string='Ubicación de inicio', compute='_compute_gps_urls',
+    )
+    gps_fin_url = fields.Char(
+        string='Ubicación de salida', compute='_compute_gps_urls',
+    )
+
+    @api.depends('gps_inicio_lat', 'gps_inicio_lng', 'gps_fin_lat', 'gps_fin_lng')
+    def _compute_gps_urls(self):
+        for rec in self:
+            rec.gps_inicio_url = self._maps_url(rec.gps_inicio_lat, rec.gps_inicio_lng)
+            rec.gps_fin_url = self._maps_url(rec.gps_fin_lat, rec.gps_fin_lng)
+
+    @staticmethod
+    def _maps_url(lat, lng):
+        if lat or lng:
+            return 'https://www.google.com/maps?q=%s,%s' % (lat, lng)
+        return False
 
     duracion_estimada = fields.Float(
         string='Duración Estimada (Horas)',
@@ -269,7 +345,14 @@ class SecurityReport(models.Model):
                 raise UserError(_(
                     'El reporte está pendiente de validación o validado y ya no se puede modificar.'
                 ))
-        return super().write(vals)
+        res = super().write(vals)
+        if 'tipo_trabajo' in vals:
+            # Si cambia el tipo y aún no se marcó nada, se rehace el checklist
+            for rec in self:
+                if not rec.check_ids.filtered('hecho'):
+                    rec.check_ids.sudo().unlink()
+                    rec._generar_checklist()
+        return res
 
     # ==========================================
     # NOTIFICACIONES Y ACTIVIDADES
@@ -338,6 +421,12 @@ class SecurityReport(models.Model):
         for rec in self:
             if not rec.descripcion:
                 raise UserError(_('Debe describir el trabajo antes de finalizarlo.'))
+            pendientes = rec.check_ids.filtered(lambda c: c.obligatorio and not c.hecho)
+            if pendientes:
+                raise UserError(_(
+                    'Faltan puntos obligatorios del checklist:\n- %s',
+                    '\n- '.join(pendientes.mapped('name')),
+                ))
             if not rec.image_ids:
                 raise UserError(_('Debe subir al menos una foto de evidencia antes de finalizar.'))
             if not rec.firma_cliente:
@@ -398,4 +487,6 @@ class SecurityReport(models.Model):
                 vals['name'] = self.env['ir.sequence'].next_by_code(
                     'security.report'
                 ) or 'Nuevo'
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        records._generar_checklist()
+        return records
